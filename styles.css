@@ -1,0 +1,193 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+body {
+    background-color: black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+    padding: 20px;
+    background-size: cover;
+    background-position: center;
+}
+
+
+.box {
+    width: 400px; /* Fixed width */
+    height: 200px; /* Fixed height */
+    margin: 20px; /* Adds margin to top and bottom */
+    background: rgba(20, 20, 20, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 1px 1px 10px rgba(250, 255, 255, 0.3);
+    animation: fadePopUp 3s ease-out forwards; 
+    animation-delay: 2s;
+}
+
+
+.container {
+    display: flex;
+    align-items: center; /* Aligns image and text vertically */
+    color: whitesmoke;
+}
+.profile-image {
+  width: 110px; /* Slightly larger for better visibility */
+  height: 110px;
+  background: url('Vzt4.gif') center/cover;
+  border-radius: 50%;
+  margin-bottom: 20px;
+  border: 3px solid whitesmoke; /* Adds a clear border for contrast */
+  box-shadow: 0 0 10px rgba(245, 245, 245, 0.8); /* Soft glow for better visibility */
+}
+
+
+.profile-text h1{
+    display: flex;
+    flex-direction: column;
+    font-family: 'cursive';
+    font-size: 35px;
+}
+.profile-text p {
+  font-size: 16px;
+  color: #545454;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 100%; /* Ensures the text container is always full width of its parent */
+  text-align: center;
+  display: inline-block;
+}
+
+
+/* Styling for social links */
+.social-links {
+  margin-top: 5px;
+}
+
+.social-link {
+  text-decoration: none;
+  color: whitesmoke;
+  font-size: 16px;
+  padding: 8px 15px;
+  margin: 5px;
+  border-radius:50px;
+  display: inline-block;
+  transition: background-color 0.5s, color 0.5s;
+}
+/* Fullscreen Particle Background */
+#particles-js {
+  background: black; /* Dark background */
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+/* GitHub link styles */
+.github {
+  background-color: #333;
+}
+
+.github:hover {
+  background-color: #6e5494;
+}
+
+/* Discord link styles */
+.discord {
+  background-color: #333;
+}
+
+.discord:hover {
+  background-color: #6e5494;
+}
+
+@keyframes fadePopUp {
+  0% {
+    opacity: 0;
+    transform: scale(0.1); /* Start smaller */
+  }
+  50% {
+    opacity: 0.5; /* Make it slightly visible */
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1); /* Final size */
+  }
+}
+/* Fullscreen Loader */
+#loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* Text Styling */
+.text {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animated Fill Effect */
+.text::before {
+    content: "Solving 3quat10n...";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 100%;
+    color: skyblue;
+    overflow: hidden;
+    white-space: nowrap;
+    animation: fill 2s linear forwards;
+}
+
+/* Keyframe Animation */
+@keyframes fill {
+    from { width: 0%; }
+    to { width: 100%; }
+}
+
+
+@media (max-width: 800px) { /* For tablets and small screens */
+
+    .container {
+        display: flex;
+        align-items: center; /* Aligns image and text vertically */
+        color: whitesmoke;
+    }
+
+    .box {
+        width: 400px; /* Fixed width */
+        height: 200px; /* Fixed height */
+        margin: 20px; /* Adds margin to top and bottom */
+        padding: 20px;
+    }
+
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    p {
+        font-size: 1rem;
+    }
+
+}
