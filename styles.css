@@ -27,8 +27,14 @@ body {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 1px 1px 10px rgba(250, 255, 255, 0.3);
-    animation: fadePopUp 3s ease-out forwards; 
-    animation-delay: 2s;
+    opacity: 0;
+    transform: scale(0.1);
+    transition: opacity 2s ease-out, transform 2s ease-out;
+}
+
+.box.animate {
+    opacity: 1;
+    transform: scale(1);
 }
 
 
@@ -147,7 +153,7 @@ body {
 
 /* Animated Fill Effect */
 .text::before {
-    content: "Solving 3quat10n...";
+    content: "Click Me!";
     position: absolute;
     top: 0;
     left: 0;
