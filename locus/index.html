@@ -6,283 +6,164 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: #000;
-      color: #0f0;
-      font-family: 'Courier New', Courier, monospace;
-      user-select: none;
-    }
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px 20px 20px;
-      box-sizing: border-box;
-      height: 100vh;
-      overflow: hidden;
-    }
-    h1, p {
-      margin: 0 0 10px 0;
-      color: #0f0;
-      font-weight: 700;
-      font-family: 'Courier New', monospace;
-      text-align: center;
-      letter-spacing: 2px;
-      text-shadow:
-        0 0 5px #0f0,
-        0 0 10px #0f0,
-        0 0 20px #0f0,
-        0 0 40px #0f0;
-      animation: flicker 2s infinite;
-      position: relative;
-    }
-    h1::after, p::after {
-      content: '|';
-      position: absolute;
-      right: -12px;
-      animation: blink 1s steps(2, start) infinite;
-      color: #0f0;
-      font-weight: 900;
-    }
-    @keyframes flicker {
-      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
-      20%, 22%, 24%, 55% { opacity: 0.4; }
-    }
-    @keyframes blink {
-      0%, 50% { opacity: 1; }
-      51%, 100% { opacity: 0; }
-    }
-    #controls {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-      width: 100%;
-      max-width: 900px;
-    }
-    label {
-      font-weight: 700;
-      font-size: 1rem;
-      color: #0f0;
-      user-select: none;
-    }
-    select, input[type=number], button {
-      background: #111;
-      color: #0f0;
-      border: 2px solid #0f0;
-      border-radius: 6px;
-      font-family: 'Courier New', monospace;
-      font-size: 1rem;
-      padding: 8px 12px;
-      transition: box-shadow 0.3s ease;
-      user-select: text;
-    }
-    select:focus, input[type=number]:focus, button:hover {
-      outline: none;
-      box-shadow: 0 0 10px #0f0;
-    }
-    button {
-      cursor: pointer;
-      font-weight: 700;
-    }
-    #msg {
-      font-family: 'Courier New', monospace;
-      font-style: normal;
-      color: #0f0;
-      margin-bottom: 10px;
-      min-height: 24px;
-      text-align: center;
-      width: 100%;
-      max-width: 900px;
-    }
-    #map {
-      height: 70vh;
-      max-width: 1000px;
-      width: 100%;
-      border-radius: 8px;
-      box-shadow: 0 0 25px #0f0, inset 0 0 10px #0f0;
-      border: 5px solid #0f0;
-    }
-    @media (max-width: 480px) {
-      #controls { flex-direction: column; gap: 20px; }
-      input[type=number], select, button { width: 100%; }
-    }
+    html, body { height: 100%; margin: 0; background: #000; color: #0f0; font-family: 'Courier New', monospace; user-select: none; }
+    body { display: flex; flex-direction: column; align-items: center; padding: 10px 20px 20px; box-sizing: border-box; height: 100vh; overflow: hidden; }
+    h1, p { margin: 0 0 10px 0; color: #0f0; font-weight: 700; font-family: 'Courier New', monospace; text-align: center; letter-spacing: 2px; text-shadow: 0 0 5px #0f0,0 0 10px #0f0,0 0 20px #0f0,0 0 40px #0f0; animation: flicker 2s infinite; position: relative; }
+    h1::after, p::after { content: '|'; position: absolute; right: -12px; animation: blink 1s steps(2, start) infinite; color: #0f0; font-weight: 900; }
+    @keyframes flicker { 0%,19%,21%,23%,25%,54%,56%,100%{opacity:1;}20%,22%,24%,55%{opacity:0.4;} }
+    @keyframes blink { 0%,50%{opacity:1;}51%,100%{opacity:0;} }
+    #controls { display:flex; gap:15px; margin-bottom:10px; flex-wrap:wrap; justify-content:center; width:100%; max-width:900px; }
+    label { font-weight:700; font-size:1rem; color:#0f0; user-select:none; }
+    select,input[type=number],button { background:#111;color:#0f0;border:2px solid #0f0;border-radius:6px;font-family:'Courier New', monospace;font-size:1rem;padding:8px 12px; transition: box-shadow 0.3s ease; user-select:text; }
+    select:focus,input[type=number]:focus,button:hover { outline:none; box-shadow:0 0 10px #0f0; }
+    button { cursor:pointer; font-weight:700; }
+    #msg { font-family:'Courier New', monospace; font-style:normal; color:#0f0; margin-bottom:10px; min-height:24px; text-align:center; width:100%; max-width:900px; }
+    #map { height:70vh; max-width:1000px; width:100%; border-radius:8px; box-shadow:0 0 25px #0f0, inset 0 0 10px #0f0; border:5px solid #0f0; }
+    @media(max-width:480px){#controls{flex-direction:column;gap:20px;}input[type=number],select,button{width:100%;}}
   </style>
 </head>
 <body>
 
-  <h1>Locus:Find C4m3r4s & R4d4r5</h1>
+<h1>Locus:Find C4m3r4s & R4d4r5</h1>
 
-  <div id="controls">
-    <label for="deviceType">Select device:</label>
-    <select id="deviceType">
-      <option value="cam">Cameras</option>
-      <option value="radar">Radars</option>
-    </select>
+<div id="controls">
+  <label for="deviceType">Select device:</label>
+  <select id="deviceType">
+    <option value="cam">Cameras</option>
+    <option value="radar">Radars</option>
+  </select>
 
-    <label for="radius">Radius (meters):</label>
-    <input id="radius" type="number" value="1000" min="10" />
+  <label for="radius">Radius (meters):</label>
+  <input id="radius" type="number" value="1000" min="10" />
 
-    <button id="removeMarkerBtn" style="display:none;">Remove My Marker</button>
-  </div>
+  <button id="removeMarkerBtn" style="display:none;">Remove My Marker</button>
+</div>
 
-  <p id="msg">Getting your location...</p>
+<p id="msg">Getting your location...</p>
+<div id="map"></div>
 
-  <div id="map"></div>
+<script>
+let map = L.map('map').setView([46.603354, 1.888334], 6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 
-  <script>
-    let map = L.map('map').setView([46.603354, 1.888334], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+let userCoords = null;
+let userMarker = null;
+let userCircle = null;
+let gpsWatchId = null;
+let userHasZoomed = false;
 
-    let userCoords = null;
-    let userMarker = null;
-    let userCircle = null;
-    let gpsWatchId = null; // store GPS watch ID
+// Icons
+const redIcon = new L.Icon({ iconUrl:'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png', shadowUrl:'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png', iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41] });
+const cameraIcon = L.icon({ iconUrl:'https://cdn-icons-png.flaticon.com/128/2062/2062582.png', iconSize:[32,32], iconAnchor:[16,32], popupAnchor:[0,-28] });
+const radarIcon = L.icon({ iconUrl:'https://cdn-icons-png.flaticon.com/128/9201/9201831.png', iconSize:[32,32], iconAnchor:[16,32], popupAnchor:[0,-28] });
 
-    const redIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+map.on('zoomstart',()=>{userHasZoomed=true;});
+map.on('dragstart',()=>{userHasZoomed=true;});
 
-    const cameraIcon = L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/128/2062/2062582.png',
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-      popupAnchor: [0, -28]
-    });
+// Distance calculation
+function distance(lat1, lon1, lat2, lon2){
+  const R=6371000;
+  const dLat=(lat2-lat1)*Math.PI/180;
+  const dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
 
-    const radarIcon = L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/128/9201/9201831.png',
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-      popupAnchor: [0, -28]
-    });
+// Find devices
+async function findDevices(){
+  if(!userCoords) return;
+  const radius=parseFloat(document.getElementById('radius').value);
+  const deviceType=document.getElementById('deviceType').value;
 
-    function distance(lat1, lon1, lat2, lon2) {
-      const R = 6371000;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat / 2) ** 2 +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
+  map.eachLayer(layer=>{
+    if(layer instanceof L.Marker && layer!==userMarker) map.removeLayer(layer);
+    if(layer instanceof L.Circle && layer!==userCircle) map.removeLayer(layer);
+  });
 
-    async function findDevices() {
-      if (!userCoords) return;
+  userCircle=L.circle(userCoords,{radius,color:'#0f0',fillColor:'#0f0',fillOpacity:0.1}).addTo(map);
 
-      const radius = parseFloat(document.getElementById('radius').value);
-      const deviceType = document.getElementById('deviceType').value;
+  try{
+    const filename=deviceType==='cam'?'france_cam.csv':'france_radar.csv';
+    const res=await fetch(filename);
+    const text=await res.text();
+    const rows=text.trim().split('\n').slice(1);
 
-      map.eachLayer(layer => {
-        if (layer instanceof L.Marker && layer !== userMarker) map.removeLayer(layer);
-        if (layer instanceof L.Circle && layer !== userCircle) map.removeLayer(layer);
-      });
-
-      userCircle = L.circle(userCoords, { radius, color: '#0f0', fillColor: '#0f0', fillOpacity: 0.1 }).addTo(map);
-
-      try {
-        const filename = deviceType === 'cam' ? 'france_cam.csv' : 'france_radar.csv';
-        const res = await fetch(filename);
-        const text = await res.text();
-        const rows = text.trim().split('\n').slice(1);
-
-        rows.forEach(row => {
-          const [adresse, lat, lon] = row.split(';');
-          if (!lat || !lon) return;
-          const d = distance(userCoords[0], userCoords[1], parseFloat(lat), parseFloat(lon));
-          if (d <= radius) {
-            const icon = deviceType === 'cam' ? cameraIcon : radarIcon;
-            L.marker([parseFloat(lat), parseFloat(lon)], { icon: icon, opacity: 0.9 })
-             .addTo(map)
-             .bindPopup(adresse);
-          }
-        });
-      } catch {
-        alert(`Error loading ${deviceType === 'cam' ? 'france_cam.csv' : 'france_radar.csv'}`);
+    rows.forEach(row=>{
+      const [adresse,lat,lon]=row.split(';');
+      if(!lat||!lon) return;
+      const d=distance(userCoords[0],userCoords[1],parseFloat(lat),parseFloat(lon));
+      if(d<=radius){
+        const icon=deviceType==='cam'?cameraIcon:radarIcon;
+        L.marker([parseFloat(lat),parseFloat(lon)],{icon:icon,opacity:0.9}).addTo(map).bindPopup(adresse);
       }
-    }
-
-    function setUserLocation(latlng, msgText = "Location set manually.") {
-      userCoords = [latlng.lat, latlng.lng];
-
-      if (!userMarker) {
-        userMarker = L.marker(userCoords, { icon: redIcon }).addTo(map).bindPopup("Your location").openPopup();
-      } else {
-        userMarker.setLatLng(userCoords);
-      }
-
-      if (userCircle) map.removeLayer(userCircle);
-      userCircle = L.circle(userCoords, { radius: parseFloat(document.getElementById('radius').value), color: '#0f0', fillColor: '#0f0', fillOpacity: 0.1 }).addTo(map);
-
-      map.setView(userCoords, 15);
-
-      document.getElementById('msg').textContent = msgText;
-      document.getElementById('removeMarkerBtn').style.display = 'inline-block';
-      findDevices();
-    }
-
-    function stopLiveGPS() {
-      if (gpsWatchId !== null) {
-        navigator.geolocation.clearWatch(gpsWatchId);
-        gpsWatchId = null;
-        document.getElementById('msg').textContent += " (Live GPS stopped)";
-      }
-    }
-
-    function onLocationSuccess(position) {
-      setUserLocation({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude
-      }, "Live GPS tracking active.");
-    }
-
-    function onLocationError() {
-      document.getElementById('msg').textContent = "Could not get live GPS. Click on the map to set your location.";
-    }
-
-    function onMapClickForLocation(e) {
-      stopLiveGPS();
-      setUserLocation(e.latlng);
-    }
-
-    document.getElementById('removeMarkerBtn').addEventListener('click', () => {
-      stopLiveGPS();
-      if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
-      if (userCircle) { map.removeLayer(userCircle); userCircle = null; }
-      map.eachLayer(layer => {
-        if (layer instanceof L.Marker && layer !== userMarker) map.removeLayer(layer);
-        if (layer instanceof L.Circle && layer !== userCircle) map.removeLayer(layer);
-      });
-      userCoords = null;
-      document.getElementById('msg').textContent = "Marker removed. Click on the map to set your location.";
-      document.getElementById('removeMarkerBtn').style.display = 'none';
     });
+  } catch {
+    alert(`Error loading ${deviceType==='cam'?'france_cam.csv':'france_radar.csv'}`);
+  }
+}
 
-    // Live GPS tracking
-    gpsWatchId = navigator.geolocation.watchPosition(onLocationSuccess, onLocationError, {
-      enableHighAccuracy: true,
-      maximumAge: 0,
-      timeout: 10000
-    });
+// Set user location
+function setUserLocation(latlng,msgText="Location set manually.",autoZoom=false){
+  userCoords=[latlng.lat,latlng.lng];
 
-    // Manual location setting
-    map.on('click', onMapClickForLocation);
+  if(!userMarker) userMarker=L.marker(userCoords,{icon:redIcon}).addTo(map).bindPopup("Your location").openPopup();
+  else userMarker.setLatLng(userCoords);
 
-    document.getElementById('radius').addEventListener('input', () => { if (userCoords) findDevices(); });
-    document.getElementById('deviceType').addEventListener('change', () => { if (userCoords) findDevices(); });
-  </script>
+  if(userCircle) map.removeLayer(userCircle);
+  const radius=parseFloat(document.getElementById('radius').value);
+  userCircle=L.circle(userCoords,{radius,color:'#0f0',fillColor:'#0f0',fillOpacity:0.1}).addTo(map);
 
-<footer style="text-align: center; padding: 20px 0; font-family: 'Georgia', serif; font-size: 1.1rem; color: #0f0; border-top: 1px solid #ccc; margin-top: 30px; line-height: 1.5;">
-  <div>Website Author: <a href="https://github.com/3quat10n" target="_blank" rel="noopener" style="color: #444; text-decoration: none;">Equat10n</a></div>
+  if(autoZoom && !userHasZoomed) map.fitBounds(userCircle.getBounds(),{padding:[20,20]});
+
+  document.getElementById('msg').textContent=msgText;
+  document.getElementById('removeMarkerBtn').style.display='inline-block';
+  findDevices();
+}
+
+// Stop live GPS
+function stopLiveGPS(){
+  if(gpsWatchId!==null){
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId=null;
+    document.getElementById('msg').textContent+=" (Live GPS stopped)";
+  }
+}
+
+// GPS callbacks
+function onLocationSuccess(position){
+  const isFirstGPS=(gpsWatchId!==null && userCoords===null);
+  setUserLocation({lat:position.coords.latitude,lng:position.coords.longitude},"Live GPS tracking active.",isFirstGPS);
+}
+function onLocationError(){document.getElementById('msg').textContent="Could not get live GPS. Click on the map to set your location.";}
+
+// Map click
+function onMapClickForLocation(e){stopLiveGPS(); setUserLocation(e.latlng);}
+
+// Remove marker
+document.getElementById('removeMarkerBtn').addEventListener('click',()=>{
+  stopLiveGPS();
+  if(userMarker){ map.removeLayer(userMarker); userMarker=null; }
+  if(userCircle){ map.removeLayer(userCircle); userCircle=null; }
+  map.eachLayer(layer=>{
+    if(layer instanceof L.Marker && layer!==userMarker) map.removeLayer(layer);
+    if(layer instanceof L.Circle && layer!==userCircle) map.removeLayer(layer);
+  });
+  userCoords=null;
+  document.getElementById('msg').textContent="Marker removed. Click on the map to set your location.";
+  document.getElementById('removeMarkerBtn').style.display='none';
+});
+
+// Event listeners
+gpsWatchId=navigator.geolocation.watchPosition(onLocationSuccess,onLocationError,{enableHighAccuracy:true,maximumAge:0,timeout:10000});
+map.on('click',onMapClickForLocation);
+document.getElementById('radius').addEventListener('input',()=>{if(userCoords)findDevices();});
+document.getElementById('deviceType').addEventListener('change',()=>{if(userCoords)findDevices();});
+</script>
+
+<footer style="text-align:center;padding:20px 0;font-family:'Georgia', serif;font-size:1.1rem;color:#0f0;border-top:1px solid #ccc;margin-top:30px;line-height:1.5;">
+  <div>Website Author: <a href="https://github.com/3quat10n" target="_blank" rel="noopener" style="color:#444;text-decoration:none;">Equat10n</a></div>
   <div><em>"Big Brother is watching you." — George Orwell</em></div>
 </footer>
+
 </body>
 </html>
