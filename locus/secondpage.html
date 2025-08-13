@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Equat10n</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://rawcdn.githack.com/bbecquet/Leaflet.RotatedMarker/master/leaflet.rotatedMarker.js"></script>
+  <style>
+    html, body { height: 100%; margin: 0; background: #000; color: #0f0; font-family: 'Courier New', monospace; user-select: none; }
+    body { display: flex; flex-direction: column; align-items: center; padding: 10px 20px 20px; box-sizing: border-box; height: 100vh; overflow: hidden; }
+    h1, p { margin: 0 0 10px 0; color: #0f0; font-weight: 700; font-family: 'Courier New', monospace; text-align: center; letter-spacing: 2px; text-shadow: 0 0 5px #0f0, 0 0 10px #0f0, 0 0 20px #0f0, 0 0 40px #0f0; animation: flicker 2s infinite; position: relative; }
+    h1::after, p::after { content: '|'; position: absolute; right: -12px; animation: blink 1s steps(2, start) infinite; color: #0f0; font-weight: 900; }
+    @keyframes flicker { 0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; } 20%, 22%, 24%, 55% { opacity: 0.4; } }
+    @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+    #controls { display: flex; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 900px; }
+    label { font-weight: 700; font-size: 1rem; color: #0f0; user-select: none; }
+    select, input[type=number], button { background: #111; color: #0f0; border: 2px solid #0f0; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 1rem; padding: 8px 12px; transition: box-shadow 0.3s ease; user-select: text; }
+    select:focus, input[type=number]:focus, button:hover { outline: none; box-shadow: 0 0 10px #0f0; }
+    button { cursor: pointer; font-weight: 700; }
+    #msg { font-family: 'Courier New', monospace; color: #0f0; margin-bottom: 10px; min-height: 24px; text-align: center; width: 100%; max-width: 900px; }
+    #map { height: 70vh; max-width: 1000px; width: 100%; border-radius: 8px; box-shadow: 0 0 25px #0f0, inset 0 0 10px #0f0; border: 5px solid #0f0; }
+    @media (max-width: 480px) { #controls { flex-direction: column; gap: 20px; } input[type=number], select, button { width: 100%; } }
+  </style>
+</head>
+<body>
+
+<h1>Locus:Find C4m3r4s & R4d4r5</h1>
+
+<div id="controls">
+  <label for="deviceType">Select device:</label>
+  <select id="deviceType">
+    <option value="cam">Cameras</option>
+    <option value="radar">Radars</option>
+  </select>
+
+  <label for="radius">Radius (meters):</label>
+  <input id="radius" type="number" value="1000" min="10" />
+
+  <button id="removeMarkerBtn" style="display:none;">Remove My Marker</button>
+</div>
+
+<p id="msg">Getting your location...</p>
+
+<div id="map"></div>
+
+<script>
+let map = L.map('map').setView([46.603354, 1.888334], 6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+let userCoords = null;
+let userMarker = null;
+let userCircle = null;
+let gpsWatchId = null;
+let manualMode = false;
+
+const redArrowIcon = L.icon({
+  iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Red_Arrow_Down.svg/1024px-Red_Arrow_Down.svg.png',
+  iconSize: [35, 35],
+  iconAnchor: [17.5, 17.5]
+});
+
+const cameraIcon = L.icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/128/2062/2062582.png',
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -28]
+});
+
+const radarIcon = L.icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/128/9201/9201831.png',
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -28]
+});
+
+function distance(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function findDevices() {
+  if (!userCoords) return;
+
+  const radius = parseFloat(document.getElementById('radius').value);
+  const deviceType = document.getElementById('deviceType').value;
+
+  map.eachLayer(layer => {
+    if (layer instanceof L.Marker && layer !== userMarker) map.removeLayer(layer);
+    if (layer instanceof L.Circle && layer !== userCircle) map.removeLayer(layer);
+  });
+
+  userCircle = L.circle(userCoords, { radius, color: '#0f0', fillColor: '#0f0', fillOpacity: 0.1 }).addTo(map);
+
+  try {
+    const filename = deviceType === 'cam' ? 'france_cam.csv' : 'france_radar.csv';
+    const res = await fetch(filename);
+    const text = await res.text();
+    const rows = text.trim().split('\n').slice(1);
+
+    rows.forEach(row => {
+      const [adresse, lat, lon] = row.split(';');
+      if (!lat || !lon) return;
+      const d = distance(userCoords[0], userCoords[1], parseFloat(lat), parseFloat(lon));
+      if (d <= radius) {
+        const icon = deviceType === 'cam' ? cameraIcon : radarIcon;
+        L.marker([parseFloat(lat), parseFloat(lon)], { icon: icon, opacity: 0.9 })
+         .addTo(map)
+         .bindPopup(adresse);
+      }
+    });
+  } catch {
+    alert(`Error loading ${deviceType === 'cam' ? 'france_cam.csv' : 'france_radar.csv'}`);
+  }
+}
+
+function setUserLocation(latlng, heading = 0, msgText = "Location set manually.") {
+  userCoords = [latlng.lat, latlng.lng];
+  map.setView(userCoords, 15);
+
+  if (userMarker) map.removeLayer(userMarker);
+
+  userMarker = L.marker(userCoords, {
+    icon: redArrowIcon,
+    rotationAngle: heading,
+    rotationOrigin: 'center center'
+  }).addTo(map).bindPopup("Your location");
+
+  document.getElementById('msg').textContent = msgText;
+  document.getElementById('removeMarkerBtn').style.display = 'inline-block';
+  findDevices();
+}
+
+function onLivePosition(position) {
+  if (manualMode) return; // Don't update if in manual mode
+
+  const lat = position.coords.latitude;
+  const lng = position.coords.longitude;
+  const heading = position.coords.heading || 0;
+  setUserLocation({ lat, lng }, heading, "Live GPS tracking...");
+}
+
+function onLocationError() {
+  document.getElementById('msg').textContent = "GPS unavailable. Click on the map to set your location.";
+}
+
+// Manual click to set location
+map.on('click', e => {
+  manualMode = true;
+  if (gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+  }
+  setUserLocation(e.latlng, 0, "Manual location set.");
+});
+
+document.getElementById('removeMarkerBtn').addEventListener('click', () => {
+  manualMode = true;
+  if (gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+  }
+  if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
+  if (userCircle) { map.removeLayer(userCircle); userCircle = null; }
+  map.eachLayer(layer => {
+    if (layer instanceof L.Marker && layer !== userMarker) map.removeLayer(layer);
+    if (layer instanceof L.Circle && layer !== userCircle) map.removeLayer(layer);
+  });
+  userCoords = null;
+  document.getElementById('msg').textContent = "Marker removed. Click on the map to set your location.";
+  document.getElementById('removeMarkerBtn').style.display = 'none';
+});
+
+// Start live GPS tracking
+gpsWatchId = navigator.geolocation.watchPosition(onLivePosition, onLocationError, {
+  enableHighAccuracy: true
+});
+
+document.getElementById('radius').addEventListener('input', () => { if (userCoords) findDevices(); });
+document.getElementById('deviceType').addEventListener('change', () => { if (userCoords) findDevices(); });
+</script>
+
+<footer style="text-align: center; padding: 20px 0; font-family: 'Georgia', serif; font-size: 1.1rem; color: #0f0; border-top: 1px solid #ccc; margin-top: 30px; line-height: 1.5;">
+  <div>Website Author: <a href="https://github.com/3quat10n" target="_blank" rel="noopener" style="color: #444; text-decoration: none;">Equat10n</a></div>
+  <div><em>"Big Brother is watching you." — George Orwell</em></div>
+</footer>
+</body>
+</html>
