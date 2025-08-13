@@ -23,7 +23,7 @@
       height: 100vh;
       overflow: hidden;
     }
-    h1 {
+    h1, p {
       margin: 0 0 10px 0;
       color: #0f0;
       font-weight: 700;
@@ -38,30 +38,7 @@
       animation: flicker 2s infinite;
       position: relative;
     }
-    h1::after {
-      content: '|';
-      position: absolute;
-      right: -12px;
-      animation: blink 1s steps(2, start) infinite;
-      color: #0f0;
-      font-weight: 900;
-    }
-    p {
-      margin: 0 0 10px 0;
-      color: #0f0;
-      font-weight: 700;
-      font-family: 'Courier New', monospace;
-      text-align: center;
-      letter-spacing: 2px;
-      text-shadow:
-        0 0 5px #0f0,
-        0 0 10px #0f0,
-        0 0 20px #0f0,
-        0 0 40px #0f0;
-      animation: flicker 2s infinite;
-      position: relative;
-    }
-    p::after {
+    h1::after, p::after {
       content: '|';
       position: absolute;
       right: -12px;
@@ -70,20 +47,12 @@
       font-weight: 900;
     }
     @keyframes flicker {
-      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-        opacity: 1;
-      }
-      20%, 22%, 24%, 55% {
-        opacity: 0.4;
-      }
+      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+      20%, 22%, 24%, 55% { opacity: 0.4; }
     }
     @keyframes blink {
-      0%, 50% {
-        opacity: 1;
-      }
-      51%, 100% {
-        opacity: 0;
-      }
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
     }
     #controls {
       display: flex;
@@ -129,27 +98,17 @@
       width: 100%;
       max-width: 900px;
     }
-
     #map {
-      height: 70vh; /* 70% of viewport height */
+      height: 70vh;
       max-width: 1000px;
       width: 100%;
       border-radius: 8px;
-      box-shadow:
-        0 0 25px #0f0,
-        inset 0 0 10px #0f0;
+      box-shadow: 0 0 25px #0f0, inset 0 0 10px #0f0;
       border: 5px solid #0f0;
     }
-    
-
     @media (max-width: 480px) {
-      #controls {
-        flex-direction: column;
-        gap: 20px;
-      }
-      input[type=number], select, button {
-        width: 100%;
-      }
+      #controls { flex-direction: column; gap: 20px; }
+      input[type=number], select, button { width: 100%; }
     }
   </style>
 </head>
@@ -182,7 +141,6 @@
     let userMarker = null;
     let userCircle = null;
 
-    // Red pin icon for user location
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -192,7 +150,6 @@
       shadowSize: [41, 41]
     });
 
-    // Camera icon
     const cameraIcon = L.icon({
       iconUrl: 'https://cdn-icons-png.flaticon.com/128/2062/2062582.png',
       iconSize: [32, 32],
@@ -200,7 +157,6 @@
       popupAnchor: [0, -28]
     });
 
-    // Radar icon
     const radarIcon = L.icon({
       iconUrl: 'https://cdn-icons-png.flaticon.com/128/9201/9201831.png',
       iconSize: [32, 32],
@@ -224,14 +180,9 @@
       const radius = parseFloat(document.getElementById('radius').value);
       const deviceType = document.getElementById('deviceType').value;
 
-      // Remove old markers except userMarker and userCircle
       map.eachLayer(layer => {
-        if (layer instanceof L.Marker && layer !== userMarker) {
-          map.removeLayer(layer);
-        }
-        if (layer instanceof L.Circle && layer !== userCircle) {
-          map.removeLayer(layer);
-        }
+        if (layer instanceof L.Marker && layer !== userMarker) map.removeLayer(layer);
+        if (layer instanceof L.Circle && layer !== userCircle) map.removeLayer(layer);
       });
 
       userCircle = L.circle(userCoords, { radius, color: '#0f0', fillColor: '#0f0', fillOpacity: 0.1 }).addTo(map);
@@ -281,57 +232,41 @@
 
     function onLocationError() {
       document.getElementById('msg').textContent = "Could not get location automatically. Click on the map to set your location.";
-      map.on('click', onMapClickForLocation);
     }
 
     function onMapClickForLocation(e) {
       setUserLocation(e.latlng);
-      map.off('click', onMapClickForLocation);
     }
 
     document.getElementById('removeMarkerBtn').addEventListener('click', () => {
-      if (userMarker) {
-        map.removeLayer(userMarker);
-        userMarker = null;
-      }
-      if (userCircle) {
-        map.removeLayer(userCircle);
-        userCircle = null;
-      }
-      // Remove all device markers
+      if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
+      if (userCircle) { map.removeLayer(userCircle); userCircle = null; }
       map.eachLayer(layer => {
-        if (layer instanceof L.Marker && layer !== userMarker) {
-          map.removeLayer(layer);
-        }
-        if (layer instanceof L.Circle && layer !== userCircle) {
-          map.removeLayer(layer);
-        }
+        if (layer instanceof L.Marker && layer !== userMarker) map.removeLayer(layer);
+        if (layer instanceof L.Circle && layer !== userCircle) map.removeLayer(layer);
       });
-
       userCoords = null;
       document.getElementById('msg').textContent = "Marker removed. Click on the map to set your location.";
       document.getElementById('removeMarkerBtn').style.display = 'none';
-      map.on('click', onMapClickForLocation);
     });
 
+    // GPS
     navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError, {
       enableHighAccuracy: true,
       timeout: 10000,
       maximumAge: 0
     });
 
-    document.getElementById('radius').addEventListener('input', () => {
-      if (userCoords) findDevices();
-    });
+    // Always allow manual location setting
+    map.on('click', onMapClickForLocation);
 
-    document.getElementById('deviceType').addEventListener('change', () => {
-      if (userCoords) findDevices();
-    });
+    document.getElementById('radius').addEventListener('input', () => { if (userCoords) findDevices(); });
+    document.getElementById('deviceType').addEventListener('change', () => { if (userCoords) findDevices(); });
   </script>
+
 <footer style="text-align: center; padding: 20px 0; font-family: 'Georgia', serif; font-size: 1.1rem; color: #0f0; border-top: 1px solid #ccc; margin-top: 30px; line-height: 1.5;">
   <div>Website Author: <a href="https://github.com/3quat10n" target="_blank" rel="noopener" style="color: #444; text-decoration: none;">Equat10n</a></div>
   <div><em>"Big Brother is watching you." — George Orwell</em></div>
 </footer>
 </body>
 </html>
-
